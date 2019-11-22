@@ -40,8 +40,6 @@ jmp_buf mark;
 
 int KeepGoing = 0;
 
-typedef char bool;
-
 static char *progname; /* Program name */
 static cbCtx cbctx;    /* Client callback context */
 
@@ -303,6 +301,7 @@ static void parseArgs(int argc, char *argv[], int inScript) {
     int i;
     char *outputOTFfilename = NULL;
     char *pfbfile = "font.ps";
+    char *aliasDBFile = NULL;
     convert.features = NULL;
     convert.maxNumSubrs = 0;
     convert.flags |= HOT_NO_OLD_OPS; /* always remove old ops */
@@ -492,7 +491,7 @@ static void parseArgs(int argc, char *argv[], int inScript) {
                                 if (arg[3] != '\0' || argsleft == 0) {
                                     showUsage();
                                 }
-                                cbAliasDBRead(cbctx, argv[++i]);
+                                aliasDBFile = argv[++i];
                                 break;
 
                             case 'a':
@@ -741,6 +740,15 @@ static void parseArgs(int argc, char *argv[], int inScript) {
                 break;
         }
     }
+
+    /* Make sure we read the glyph order and alias file *after* processing
+       all command line arguments to ensure we get the release mode flag. */
+    if (aliasDBFile != NULL) {
+        bool releaseMode;
+        releaseMode = ((convert.otherflags & OTHERFLAGS_RELEASEMODE) != 0);
+        cbAliasDBRead(cbctx, aliasDBFile, releaseMode);
+    }
+
     if (!convert.fontDone) {
         convFont(pfbfile, outputOTFfilename);
     }

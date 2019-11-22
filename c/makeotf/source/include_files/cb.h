@@ -7,6 +7,7 @@
 #define CB_H
 
 #include <stddef.h>
+#include <stdbool.h>
 #include "dynarr.h"
 typedef struct cbCtx_ *cbCtx;
 
@@ -25,7 +26,7 @@ void cbConvert(cbCtx h, int flags, char *clientVers,
                long addGlyphWeight, unsigned long maxNumSubrs, short fsSelectionMask_on, short fsSelectionMask_off, unsigned short os2Version, char *licenseID);
 
 void cbFCDBRead(cbCtx h, char *filename);
-void cbAliasDBRead(cbCtx h, char *filename);
+void cbAliasDBRead(cbCtx h, char *filename, bool releaseMode);
 void cbAliasDBCancel(cbCtx h);
 void cbFree(cbCtx h);
 

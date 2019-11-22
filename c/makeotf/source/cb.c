@@ -897,7 +897,7 @@ enum {
     uvName
 };
 
-static char *gnameScan(cbCtx h, char *p, unsigned char *action, unsigned char *next, int nameType) {
+static char *gnameScan(cbCtx h, char *p, unsigned char *action, unsigned char *next, int nameType, bool releaseMode) {
     char *start = p;
     int state = 0;
 
@@ -912,6 +912,8 @@ static char *gnameScan(cbCtx h, char *p, unsigned char *action, unsigned char *n
         } else if (isdigit(c)) {
             class = 1;
         } else if (c == '.') {
+            class = 2;
+        } else if ((nameType == finalName) && (releaseMode == false) && (c == '-')) {
             class = 2;
         } else if ((nameType == sourceName) && (c == '.' || c == '+' || c == '*' || c == ':' || c == '~' || c == '^' || c == '!' || c == '-')) {
             class = 2;
@@ -942,18 +944,18 @@ static char *gnameScan(cbCtx h, char *p, unsigned char *action, unsigned char *n
     }
 }
 
-static char *gnameDevScan(cbCtx h, char *p) {
-    char *val = gnameScan(h, p, (unsigned char *)actionDev, (unsigned char *)nextFinal, sourceName);
+static char *gnameDevScan(cbCtx h, char *p, bool releaseMode) {
+    char *val = gnameScan(h, p, (unsigned char *)actionDev, (unsigned char *)nextFinal, sourceName, releaseMode);
     return val;
 }
 
-static char *gnameFinalScan(cbCtx h, char *p) {
-    char *val = gnameScan(h, p, (unsigned char *)actionFinal, (unsigned char *)nextFinal, finalName);
+static char *gnameFinalScan(cbCtx h, char *p, bool releaseMode) {
+    char *val = gnameScan(h, p, (unsigned char *)actionFinal, (unsigned char *)nextFinal, finalName, releaseMode);
     return val;
 }
 
-static char *gnameUVScan(cbCtx h, char *p) {
-    char *val = gnameScan(h, p, (unsigned char *)actionFinal, (unsigned char *)nextFinal, uvName);
+static char *gnameUVScan(cbCtx h, char *p, bool releaseMode) {
+    char *val = gnameScan(h, p, (unsigned char *)actionFinal, (unsigned char *)nextFinal, uvName, releaseMode);
     return val;
 }
 
@@ -1050,7 +1052,7 @@ static int CDECL cmpFinalAlias(const void *first, const void *second, void *ctx)
 
 #define maxLineLen 1024
 
-void cbAliasDBRead(cbCtx h, char *filename) {
+void cbAliasDBRead(cbCtx h, char *filename, bool releaseMode) {
     File file;
     long lineno;
     long iOrder = -1;
@@ -1083,7 +1085,7 @@ void cbAliasDBRead(cbCtx h, char *filename) {
         iOrder++;
         /* Parse final name */
         final = p;
-        p = gnameFinalScan(h, final);
+        p = gnameFinalScan(h, final, releaseMode);
         if (p == NULL || !isspace(*p)) {
             goto syntaxError;
         }
@@ -1099,7 +1101,7 @@ void cbAliasDBRead(cbCtx h, char *filename) {
 
         /* Parse alias name */
         alias = p;
-        p = gnameDevScan(h, alias);
+        p = gnameDevScan(h, alias, releaseMode);
         if (p == NULL || !isspace(*p)) {
             goto syntaxError;
         }
@@ -1121,7 +1123,7 @@ void cbAliasDBRead(cbCtx h, char *filename) {
                 *p = '\0';
             } else {
                 uvName = p;
-                p = gnameUVScan(h, uvName);
+                p = gnameUVScan(h, uvName, releaseMode);
                 if (p == NULL || !isspace(*p)) {
                     goto syntaxError;
                 }
